@@ -1,0 +1,29 @@
+<idea-plugin>
+    <id>com.querybuilder.SalesforceQueryBuilder</id>
+    <name>Salesforce Query Builder</name>
+
+    <!-- Text to display as company information on Preferences/Settings | Plugin page -->
+    <vendor email="leonicolas@gmail.com.com">Salesforce Query Builder</vendor>
+
+    <!-- Text to display as name on Preferences/Settings | Plugin page  -->
+    <description><![CDATA[
+        Salesforce Query Builder.
+    ]]></description>
+
+    <change-notes><![CDATA[
+      <ul>
+        <li><b>0.0.1</b> Alpha release.</li>
+      </ul>
+    ]]></change-notes>
+
+    <!-- Indicate this plugin can be loaded in all IntelliJ Platform-based products. -->
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow
+            anchor="right"
+            id="SF Query Builder"
+            secondary="false"
+            factoryClass="com.querybuilder.QueryBuilderWindowFactory" />
+    </extensions>
+</idea-plugin>
