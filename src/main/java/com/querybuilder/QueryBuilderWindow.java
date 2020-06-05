@@ -3,16 +3,16 @@ package com.querybuilder;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckboxTreeBase;
+import com.intellij.ui.CheckboxTreeListener;
 import com.intellij.ui.CheckedTreeNode;
 import org.apache.commons.lang.StringUtils;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class QueryBuilderWindow {
 
@@ -76,8 +76,44 @@ public class QueryBuilderWindow {
         }
     }
 
+    private Map<String, Set<String>> selectedFieldsBySObject = new HashMap<>();
+
     private void createUIComponents() {
         sObjectsTree = new CheckboxTree(new CheckboxTreeCellCustomRenderer(), null);
+        sObjectsTree.addCheckboxTreeListener(new CheckboxTreeListener() {
+            @Override
+            public void nodeStateChanged(@NotNull CheckedTreeNode node) {
+                DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode) node.getParent();
+                String sObjectName = (String) parentNode.getUserObject();
+                String fieldName = (String) node.getUserObject();
+
+                if(node.isChecked()) {
+                    if(!selectedFieldsBySObject.containsKey(sObjectName)) {
+                        selectedFieldsBySObject.put(sObjectName, new HashSet<>());
+                    }
+                    selectedFieldsBySObject.get(sObjectName).add(fieldName);
+                } else if(selectedFieldsBySObject.containsKey(sObjectName)) {
+                    selectedFieldsBySObject.get(sObjectName).remove(fieldName);
+                }
+                buildQuery();
+            }
+        });
+    }
+
+    private void buildQuery() {
+        StringBuilder sb = new StringBuilder();
+        for(Map.Entry<String, Set<String>> sObjectData : selectedFieldsBySObject.entrySet()) {
+            if(sObjectData.getValue().isEmpty()) {
+                continue;
+            }
+
+            sb.append("SELECT ")
+                .append(String.join(", ", sObjectData.getValue()))
+                .append("\nFROM ")
+                .append(sObjectData.getKey())
+                .append(";\n");
+        }
+        queryTextArea.setText(sb.toString());
     }
 
     public class SObject {
