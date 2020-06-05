@@ -1,10 +1,10 @@
 package com.querybuilder;
 
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.ui.treeStructure.Tree;
-import org.scijava.swing.checkboxtree.CheckBoxNodeData;
-import org.scijava.swing.checkboxtree.CheckBoxNodeEditor;
-import org.scijava.swing.checkboxtree.CheckBoxNodeRenderer;
+import com.intellij.ui.CheckboxTree;
+import com.intellij.ui.CheckboxTreeBase;
+import com.intellij.ui.CheckedTreeNode;
+import org.apache.commons.lang.StringUtils;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -18,17 +18,25 @@ public class QueryBuilderWindow {
 
     private JPanel panel;
     private JTextArea queryTextArea;
-    private Tree sObjectsTree;
+    private CheckboxTree sObjectsTree;
+
 
     public QueryBuilderWindow(ToolWindow toolWindow) {
-        // Initializes checkbox node rerender.
-        final CheckBoxNodeRenderer renderer = new CheckBoxNodeRenderer();
-        sObjectsTree.setCellRenderer(renderer);
 
-        // Initializes checkbox node editor.
-        final CheckBoxNodeEditor editor = new CheckBoxNodeEditor(sObjectsTree);
-        sObjectsTree.setCellEditor(editor);
-        sObjectsTree.setEditable(true);
+//        sObjectsTree.setCellRenderer(new CheckboxTree.CheckboxTreeCellRenderer(false) {
+//            @Override
+//            public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+//                super.customizeRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
+//                String nodeText = "";
+//                if(value instanceof CheckedTreeNode) {
+//                    nodeText = (String) ((CheckedTreeNode) value).getUserObject();
+//                }
+//                else if(value instanceof DefaultMutableTreeNode) {
+//                    nodeText = (String) ((DefaultMutableTreeNode) value).getUserObject();
+//                }
+//                getTextRenderer().append(nodeText == null ? "" : nodeText);
+//            }
+//        });
 
         // Initializes tree data.
         loadSObjects(new ArrayList<>() {{
@@ -60,10 +68,16 @@ public class QueryBuilderWindow {
         DefaultMutableTreeNode sObjectNode = new DefaultMutableTreeNode(sObject.name);
         parentNode.add(sObjectNode);
 
-        for(String field : sObject.fields) {
-            CheckBoxNodeData fieldNode = new CheckBoxNodeData(field, false);
-            sObjectNode.add(new DefaultMutableTreeNode(fieldNode));
+        for(String fieldName : sObject.fields) {
+            CheckedTreeNode fieldNode = new CheckedTreeNode(fieldName);
+            fieldNode.setChecked(false);
+            fieldNode.setEnabled(true);
+            sObjectNode.add(fieldNode);
         }
+    }
+
+    private void createUIComponents() {
+        sObjectsTree = new CheckboxTree(new CheckboxTreeCellCustomRenderer(), null);
     }
 
     public class SObject {
@@ -85,6 +99,25 @@ public class QueryBuilderWindow {
 
         public List<String> getFields() {
             return fields;
+        }
+    }
+
+    private class CheckboxTreeCellCustomRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
+        @Override
+        public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+            super.customizeRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
+
+            String nodeText = null;
+            if(value instanceof CheckedTreeNode) {
+                nodeText = (String) ((CheckedTreeNode) value).getUserObject();
+            }
+            else if(value instanceof DefaultMutableTreeNode) {
+                nodeText = (String) ((DefaultMutableTreeNode) value).getUserObject();
+            }
+
+            if(nodeText != null) {
+                getTextRenderer().append(nodeText);
+            }
         }
     }
 }
