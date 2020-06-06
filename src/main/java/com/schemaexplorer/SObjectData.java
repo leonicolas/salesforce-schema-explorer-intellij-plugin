@@ -1,4 +1,4 @@
-package com.querybuilder;
+package com.schemaexplorer;
 
 import java.util.Collections;
 import java.util.List;

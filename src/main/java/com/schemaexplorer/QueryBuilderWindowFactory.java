@@ -1,4 +1,4 @@
-package com.querybuilder;
+package com.schemaexplorer;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
