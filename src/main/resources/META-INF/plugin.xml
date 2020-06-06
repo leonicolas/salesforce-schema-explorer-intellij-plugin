@@ -1,5 +1,5 @@
 <idea-plugin>
-    <id>com.querybuilder.SalesforceQueryBuilder</id>
+    <id>com.schemaexplorer.SalesforceQueryBuilder</id>
     <name>Salesforce Query Builder</name>
 
     <!-- Text to display as company information on Preferences/Settings | Plugin page -->
@@ -24,6 +24,6 @@
             anchor="right"
             id="SF Query Builder"
             secondary="false"
-            factoryClass="com.querybuilder.QueryBuilderWindowFactory" />
+            factoryClass="com.schemaexplorer.QueryBuilderWindowFactory" />
     </extensions>
 </idea-plugin>

@@ -1,4 +1,4 @@
-package com.querybuilder;
+package com.schemaexplorer;
 
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckboxTreeListener;
@@ -53,19 +53,19 @@ public class QueryBuilderWindow {
         sObjectsTree.addCheckboxTreeListener(new CheckboxTreeListener() {
             @Override
             public void nodeStateChanged(@NotNull CheckedTreeNode node) {
-                DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode) node.getParent();
-                String sObjectName = (String) parentNode.getUserObject();
-                String fieldName = (String) node.getUserObject();
+            DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode) node.getParent();
+            String sObjectName = (String) parentNode.getUserObject();
+            String fieldName = (String) node.getUserObject();
 
-                if(node.isChecked()) {
-                    if(!selectedFieldsBySObject.containsKey(sObjectName)) {
-                        selectedFieldsBySObject.put(sObjectName, new HashSet<>());
-                    }
-                    selectedFieldsBySObject.get(sObjectName).add(fieldName);
-                } else if(selectedFieldsBySObject.containsKey(sObjectName)) {
-                    selectedFieldsBySObject.get(sObjectName).remove(fieldName);
+            if(node.isChecked()) {
+                if(!selectedFieldsBySObject.containsKey(sObjectName)) {
+                    selectedFieldsBySObject.put(sObjectName, new HashSet<>());
                 }
-                buildQuery();
+                selectedFieldsBySObject.get(sObjectName).add(fieldName);
+            } else if(selectedFieldsBySObject.containsKey(sObjectName)) {
+                selectedFieldsBySObject.get(sObjectName).remove(fieldName);
+            }
+            buildQuery();
             }
         });
     }
