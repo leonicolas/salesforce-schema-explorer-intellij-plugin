@@ -68,29 +68,6 @@ public class SchemaExplorerWindow {
         rootNode.setUserObject("Salesforce Schema Explorer");
     }
 
-    private String buildQuery(String currentSOQLText, Collection<SObjectData> sObjectDataSet) {
-        StringBuilder sb = new StringBuilder();
-        for(SObjectData sObjectData : sObjectDataSet) {
-            if(sObjectData.getFields().isEmpty()) {
-                continue;
-            }
-
-            Set<String> fieldsNames = new HashSet<>();
-            sObjectData.getFields().forEach(fieldData -> fieldsNames.add(fieldData.getName()));
-
-            Pattern soqlPattern = Pattern.compile(String.format("(?<=FROM %s)[^;]*", sObjectData.getName()));
-            Matcher soqlMatcher = soqlPattern.matcher(currentSOQLText);
-            String currentSoqlData = soqlMatcher.find() ? soqlMatcher.group() : "";
-            sb.append("SELECT ")
-                .append(String.join(", ", fieldsNames))
-                .append("\nFROM ")
-                .append(sObjectData.getName())
-                .append(currentSoqlData)
-                .append(";\n\n");
-        }
-        return sb.toString();
-    }
-
     private JTextArea getQueryTextArea(SalesforceConnection connection) {
         int tabIndex = queriesPanel.indexOfTab(connection.getName());
         if(tabIndex < 0) {
@@ -144,7 +121,7 @@ public class SchemaExplorerWindow {
             }
 
             JTextArea queryTextArea = getQueryTextArea(connection);
-            String soqlText = buildQuery(queryTextArea.getText(), sObjectDataMap.values());
+            String soqlText = SOQLQueryBuilder.buildQuery(queryTextArea.getText(), sObjectDataMap.values());
             if(soqlText.isBlank()) {
                 removeTab(connection);
             } else {
