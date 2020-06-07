@@ -1,13 +1,13 @@
 <idea-plugin>
-    <id>com.schemaexplorer.SalesforceQueryBuilder</id>
-    <name>Salesforce Query Builder</name>
+    <id>com.schemaexplorer</id>
+    <name>Salesforce Schema Explorer</name>
 
     <!-- Text to display as company information on Preferences/Settings | Plugin page -->
-    <vendor email="leonicolas@gmail.com.com">Salesforce Query Builder</vendor>
+    <vendor email="leonicolas@gmail.com.com">Salesforce Schema Explorer</vendor>
 
     <!-- Text to display as name on Preferences/Settings | Plugin page  -->
     <description><![CDATA[
-        Salesforce Query Builder.
+        Salesforce Schema Explorer.
     ]]></description>
 
     <change-notes><![CDATA[
@@ -22,8 +22,8 @@
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow
             anchor="right"
-            id="SF Query Builder"
+            id="Salesforce Schema Explorer"
             secondary="false"
-            factoryClass="com.schemaexplorer.QueryBuilderWindowFactory" />
+            factoryClass="com.schemaexplorer.SchemaExplorerWindowFactory" />
     </extensions>
 </idea-plugin>
