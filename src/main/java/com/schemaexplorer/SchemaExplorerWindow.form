@@ -19,23 +19,6 @@
         </properties>
         <border type="none"/>
         <children>
-          <scrollpane id="b7c02">
-            <constraints>
-              <splitpane position="right"/>
-            </constraints>
-            <properties>
-              <opaque value="false"/>
-            </properties>
-            <border type="none"/>
-            <children>
-              <tabbedpane id="570ec" binding="queriesPanel">
-                <constraints/>
-                <properties/>
-                <border type="none"/>
-                <children/>
-              </tabbedpane>
-            </children>
-          </scrollpane>
           <scrollpane id="b342d">
             <constraints>
               <splitpane position="left"/>
@@ -49,6 +32,14 @@
               </component>
             </children>
           </scrollpane>
+          <tabbedpane id="92558" binding="queriesTabs">
+            <constraints>
+              <splitpane position="right"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children/>
+          </tabbedpane>
         </children>
       </splitpane>
     </children>
