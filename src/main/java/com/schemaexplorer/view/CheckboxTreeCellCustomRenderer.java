@@ -1,4 +1,4 @@
-package com.schemaexplorer;
+package com.schemaexplorer.view;
 
 import com.intellij.ui.CheckboxTree;
 import com.schemaexplorer.model.FieldData;

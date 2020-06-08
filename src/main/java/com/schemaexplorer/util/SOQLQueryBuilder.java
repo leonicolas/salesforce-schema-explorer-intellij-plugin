@@ -1,4 +1,4 @@
-package com.schemaexplorer;
+package com.schemaexplorer.util;
 
 import com.schemaexplorer.model.SObjectData;
 

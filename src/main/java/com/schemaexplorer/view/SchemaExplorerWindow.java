@@ -1,4 +1,4 @@
-package com.schemaexplorer;
+package com.schemaexplorer.view;
 
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckboxTreeListener;
@@ -7,6 +7,8 @@ import com.intellij.ui.components.JBScrollPane;
 import com.schemaexplorer.model.FieldData;
 import com.schemaexplorer.model.SObjectData;
 import com.schemaexplorer.model.SalesforceConnection;
+import com.schemaexplorer.util.SOQLQueryBuilder;
+import com.schemaexplorer.view.CheckboxTreeCellCustomRenderer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
