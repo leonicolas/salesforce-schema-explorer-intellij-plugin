@@ -8,6 +8,7 @@ import com.intellij.ui.content.ContentFactory;
 import com.schemaexplorer.model.FieldData;
 import com.schemaexplorer.model.SObjectData;
 import com.schemaexplorer.model.SalesforceConnection;
+import com.schemaexplorer.view.SchemaExplorerWindow;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
