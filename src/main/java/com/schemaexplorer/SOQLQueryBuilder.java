@@ -24,11 +24,11 @@ public class SOQLQueryBuilder {
             Matcher soqlMatcher = soqlPattern.matcher(currentSOQLText);
             String currentSoqlData = soqlMatcher.find() ? soqlMatcher.group() : "";
             sb.append("SELECT ")
-                    .append(String.join(", ", fieldsNames))
-                    .append("\nFROM ")
-                    .append(sObjectData.getName())
-                    .append(currentSoqlData)
-                    .append(";\n\n");
+                .append(String.join(", ", fieldsNames))
+                .append("\nFROM ")
+                .append(sObjectData.getName())
+                .append(currentSoqlData)
+                .append(";\n\n");
         }
         return sb.toString();
     }
