@@ -37,6 +37,10 @@ public class SObjectData {
         return Collections.unmodifiableSet(fields);
     }
 
+    public void clearFields() {
+        fields.clear();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
