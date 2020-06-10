@@ -1,8 +1,9 @@
 package com.schemaexplorer.model;
 
+import java.io.Serializable;
 import java.util.*;
 
-public class SObjectData {
+public class SObjectData implements Serializable {
 
     private final String connectionName;
     private final String name;

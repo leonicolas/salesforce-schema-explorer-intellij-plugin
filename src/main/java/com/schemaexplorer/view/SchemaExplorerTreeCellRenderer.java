@@ -8,7 +8,8 @@ import com.schemaexplorer.model.SalesforceConnection;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 
-public class CheckboxTreeCellCustomRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
+public class SchemaExplorerTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
+
     @Override
     public void customizeRenderer(JTree tree, Object node, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
         super.customizeRenderer(tree, node, selected, expanded, leaf, row, hasFocus);

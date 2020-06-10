@@ -1,8 +1,9 @@
 package com.schemaexplorer.model;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public class FieldData {
+public class FieldData implements Serializable {
 
     private String name;
 
