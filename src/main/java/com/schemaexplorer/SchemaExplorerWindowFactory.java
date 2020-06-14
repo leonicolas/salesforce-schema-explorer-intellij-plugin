@@ -35,9 +35,9 @@ public class SchemaExplorerWindowFactory implements ToolWindowFactory {
         return new SObjectLoadListener() {
             @Override
             public void onSObjectLoad(@NotNull SObjectData sObjectData) {
-            for (String fieldName : new String[]{"Id", "Name", "Custom_Field__c", "CreatedDate"}) {
-                sObjectData.addField(new FieldData(fieldName));
-            }
+                for (String fieldName : new String[]{"Id", "Name", "Custom_Field__c", "CreatedDate"}) {
+                    sObjectData.addField(new FieldData(fieldName));
+                }
             }
         };
     }
@@ -46,9 +46,9 @@ public class SchemaExplorerWindowFactory implements ToolWindowFactory {
         return new ConnectionLoadListener() {
             @Override
             public void onConnectionLoad(@NotNull SalesforceConnection connection) {
-            for (String sObjectName : new String[]{"Opportunity", "User", "Account", "Contact"}) {
-                connection.addSObjectData(new SObjectData(connection.getName(), sObjectName));
-            }
+                for (String sObjectName : new String[]{"Opportunity", "User", "Account", "Contact"}) {
+                    connection.addSObjectData(new SObjectData(connection.getName(), sObjectName));
+                }
             }
         };
     }
