@@ -47,6 +47,10 @@ public class SObjectData implements Serializable {
         );
     }
 
+    public boolean hasFields() {
+        return !this.fields.isEmpty();
+    }
+
     public void clearFields() {
         fields.clear();
     }

@@ -13,7 +13,7 @@ public class SOQLQueryBuilder {
     public static String buildQuery(String currentSOQLText, Collection<SObjectData> sObjectDataSet) {
         StringBuilder sb = new StringBuilder();
         for(SObjectData sObjectData : sObjectDataSet) {
-            if(sObjectData.getFields().isEmpty()) {
+            if(!sObjectData.hasFields()) {
                 continue;
             }
 

@@ -73,11 +73,10 @@ public class SchemaExplorerWindow {
     private void loadFields(SObjectData sObjectData, CheckedTreeNode sObjectNode) {
         sObjectNode.removeAllChildren();
         if(sObjectData.getFields().isEmpty()) {
-            sObjectNode.setEnabled(false);
             addLoadingNode(sObjectNode);
         } else {
-            sObjectNode.setEnabled(true);
             sObjectData.getSortedFields().forEach(fieldData -> createNewCheckedTreeNode(sObjectNode, fieldData));
+            sObjectsTree.expandPath(new TreePath(sObjectNode.getPath()));
         }
     }
 
@@ -157,8 +156,7 @@ public class SchemaExplorerWindow {
                 } else if (node.getUserObject() instanceof SObjectData) {
                     SObjectData sObjectData = (SObjectData) node.getUserObject();
                     if(sObjectData.getFields().isEmpty()) {
-                        sObjectLoadDispatcher.getMulticaster().onSObjectLoad(sObjectData);
-                        loadFields(sObjectData, (CheckedTreeNode) node);
+                        triggerOnSObjectLoadEvent(node);
                     }
                 }
             }
@@ -170,8 +168,19 @@ public class SchemaExplorerWindow {
         };
     }
 
+    private void triggerOnSObjectLoadEvent(DefaultMutableTreeNode sObjectNode) {
+        SObjectData sObjectData = (SObjectData) sObjectNode.getUserObject();
+        sObjectLoadDispatcher.getMulticaster().onSObjectLoad(sObjectData);
+        if(sObjectData.hasFields()) {
+            loadFields(sObjectData, (CheckedTreeNode) sObjectNode);
+        }
+    }
+
     private CheckboxTreeListener createCheckboxTreeListener() {
         return new CheckboxTreeListener() {
+
+            private boolean isBatchFieldSelectionRunning = false;
+
             @Override
             public void nodeStateChanged(@NotNull CheckedTreeNode node) {
                 if (node.getUserObject() instanceof FieldData) {
@@ -183,34 +192,78 @@ public class SchemaExplorerWindow {
 
             private void updateSelectedSObject(CheckedTreeNode node) {
                 SObjectData sObjectData = (SObjectData) node.getUserObject();
+
+                // Calls the loading event.
+                if(!sObjectData.hasFields()) {
+                    triggerOnSObjectLoadEvent(node);
+                }
+
+                // Gets nodes data.
                 DefaultMutableTreeNode connectionNode = (DefaultMutableTreeNode) node.getParent();
                 SalesforceConnection connection = (SalesforceConnection) connectionNode.getUserObject();
 
-                if (node.isChecked()) {
-                    sObjectData.getFields().forEach(fieldData -> addSelectedField(fieldData, connection, sObjectData));
-                } else {
-                    sObjectData.clearFields();
+                // Select / unselect children fields.
+                isBatchFieldSelectionRunning = true;
+                for(int index = 0; index < node.getChildCount(); index++) {
+                    CheckedTreeNode fieldNode = (CheckedTreeNode) node.getChildAt(index);
+                    if (node.isChecked()) {
+                        //fieldNode.setChecked(true);
+                        selectFieldNode(fieldNode);
+                    } else {
+                        //fieldNode.setChecked(false);
+                        unselectFieldNode(fieldNode);
+                    }
                 }
+                isBatchFieldSelectionRunning = false;
 
                 updateSOQLText(connection);
             }
 
             private void updateSelectedField(CheckedTreeNode node) {
-                FieldData fieldData = (FieldData) node.getUserObject();
-
-                DefaultMutableTreeNode sObjectNode = (DefaultMutableTreeNode) node.getParent();
-                SObjectData sObjectData = (SObjectData) sObjectNode.getUserObject();
-
-                DefaultMutableTreeNode connectionNode = (DefaultMutableTreeNode) sObjectNode.getParent();
-                SalesforceConnection connection = (SalesforceConnection) connectionNode.getUserObject();
-
-                if (node.isChecked()) {
-                    addSelectedField(fieldData, connection, sObjectData);
-                } else {
-                    removeField(fieldData, connection, sObjectData);
+                if(isBatchFieldSelectionRunning) {
+                    return;
                 }
+                if (node.isChecked()) {
+                    selectFieldNode(node);
+                } else {
+                    unselectFieldNode(node);
+                }
+                DefaultMutableTreeNode sObjectNode = (DefaultMutableTreeNode) node.getParent();
+                DefaultMutableTreeNode connectionNode = (DefaultMutableTreeNode) sObjectNode.getParent();
+                updateSOQLText((SalesforceConnection) connectionNode.getUserObject());
+            }
 
-                updateSOQLText(connection);
+            private void selectFieldNode(CheckedTreeNode fieldNode) {
+                CheckedTreeNode sObjectNode = (CheckedTreeNode) fieldNode.getParent();
+                DefaultMutableTreeNode connectionNode = (DefaultMutableTreeNode) sObjectNode.getParent();
+
+                SalesforceConnection connection = (SalesforceConnection) connectionNode.getUserObject();
+                SObjectData sObjectData = (SObjectData) sObjectNode.getUserObject();
+                FieldData fieldData = (FieldData) fieldNode.getUserObject();
+
+                if (!selectedFieldsByConnection.containsKey(connection)) {
+                    selectedFieldsByConnection.put(connection, new HashMap<>());
+                }
+                Map<String, SObjectData> sObjectDataMap = selectedFieldsByConnection.get(connection);
+                if (!sObjectDataMap.containsKey(sObjectData.getName())) {
+                    sObjectDataMap.put(sObjectData.getName(), new SObjectData(sObjectData));
+                }
+                sObjectDataMap.get(sObjectData.getName()).addField(fieldData);
+            }
+
+            private void unselectFieldNode(CheckedTreeNode fieldNode) {
+                CheckedTreeNode sObjectNode = (CheckedTreeNode) fieldNode.getParent();
+                DefaultMutableTreeNode connectionNode = (DefaultMutableTreeNode) sObjectNode.getParent();
+
+                SalesforceConnection connection = (SalesforceConnection) connectionNode.getUserObject();
+                SObjectData sObjectData = (SObjectData) sObjectNode.getUserObject();
+                FieldData fieldData = (FieldData) fieldNode.getUserObject();
+
+                Map<String, SObjectData> sObjectDataMap = selectedFieldsByConnection.get(connection);
+                if (!sObjectDataMap.containsKey(sObjectData.getName())) {
+                    return;
+                }
+                sObjectDataMap.get(sObjectData.getName()).removeField(fieldData);
             }
 
             private void updateSOQLText(SalesforceConnection connection) {
@@ -227,25 +280,6 @@ public class SchemaExplorerWindow {
                     selectTab(connection);
                     queryTextArea.setText(soqlText);
                 }
-            }
-
-            private void addSelectedField(FieldData fieldData, SalesforceConnection connection, SObjectData sObjectData) {
-                if (!selectedFieldsByConnection.containsKey(connection)) {
-                    selectedFieldsByConnection.put(connection, new HashMap<>());
-                }
-                Map<String, SObjectData> sObjectDataMap = selectedFieldsByConnection.get(connection);
-                if (!sObjectDataMap.containsKey(sObjectData.getName())) {
-                    sObjectDataMap.put(sObjectData.getName(), new SObjectData(sObjectData));
-                }
-                sObjectDataMap.get(sObjectData.getName()).addField(fieldData);
-            }
-
-            private void removeField(FieldData fieldData, SalesforceConnection connection, SObjectData sObjectData) {
-                Map<String, SObjectData> sObjectDataMap = selectedFieldsByConnection.get(connection);
-                if (!sObjectDataMap.containsKey(sObjectData.getName())) {
-                    return;
-                }
-                sObjectDataMap.get(sObjectData.getName()).removeField(fieldData);
             }
         };
     }
