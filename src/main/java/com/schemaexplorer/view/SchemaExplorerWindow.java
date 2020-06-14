@@ -16,9 +16,7 @@ import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeWillExpandListener;
 import javax.swing.tree.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SchemaExplorerWindow {
 
@@ -39,7 +37,9 @@ public class SchemaExplorerWindow {
 
     public void loadSalesforceConnections(@NotNull List<SalesforceConnection> salesforceConnections) {
         getRootNode().removeAllChildren();
-        salesforceConnections.forEach(connection -> addConnection(connection));
+        List<SalesforceConnection> connections = new ArrayList<>(salesforceConnections);
+        connections.sort(Comparator.comparing(SalesforceConnection::getName));
+        connections.forEach(connection -> addConnection(connection));
         refresh();
     }
 
@@ -61,7 +61,7 @@ public class SchemaExplorerWindow {
 
     private void loadSObjects(SalesforceConnection connection, DefaultMutableTreeNode connectionNode) {
         connectionNode.removeAllChildren();
-        connection.getSObjectDataSet().forEach(sObjectData -> {
+        connection.getSortedSObjectDataSet().forEach(sObjectData -> {
             CheckedTreeNode sObjectNode = createNewCheckedTreeNode(connectionNode, sObjectData);
             loadFields(sObjectData, sObjectNode);
         });
@@ -77,7 +77,7 @@ public class SchemaExplorerWindow {
             addLoadingNode(sObjectNode);
         } else {
             sObjectNode.setEnabled(true);
-            sObjectData.getFields().forEach(fieldData -> createNewCheckedTreeNode(sObjectNode, fieldData));
+            sObjectData.getSortedFields().forEach(fieldData -> createNewCheckedTreeNode(sObjectNode, fieldData));
         }
     }
 

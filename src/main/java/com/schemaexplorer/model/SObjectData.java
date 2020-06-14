@@ -1,5 +1,7 @@
 package com.schemaexplorer.model;
 
+import com.google.common.collect.ImmutableSortedSet;
+
 import java.io.Serializable;
 import java.util.*;
 
@@ -36,6 +38,13 @@ public class SObjectData implements Serializable {
 
     public Set<FieldData> getFields() {
         return Collections.unmodifiableSet(fields);
+    }
+
+    public Set<FieldData> getSortedFields() {
+        return ImmutableSortedSet.copyOf(
+            Comparator.comparing(FieldData::getName),
+            this.fields
+        );
     }
 
     public void clearFields() {

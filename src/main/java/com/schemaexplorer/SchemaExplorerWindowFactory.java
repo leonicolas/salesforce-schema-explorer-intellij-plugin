@@ -25,9 +25,9 @@ public class SchemaExplorerWindowFactory implements ToolWindowFactory {
         this.schemaExplorerWindow.addConnectionLoadListener(createConnectionLoadListener());
         this.schemaExplorerWindow.addSObjectLoadListener(createSObjectLoadListener());
         this.schemaExplorerWindow.loadSalesforceConnections(List.of(
+            new SalesforceConnection("Connection 3"),
             new SalesforceConnection("Connection 1"),
-            new SalesforceConnection("Connection 2"),
-            new SalesforceConnection("Connection 3")
+            new SalesforceConnection("Connection 2")
         ));
     }
 
@@ -46,7 +46,7 @@ public class SchemaExplorerWindowFactory implements ToolWindowFactory {
         return new ConnectionLoadListener() {
             @Override
             public void onConnectionLoad(@NotNull SalesforceConnection connection) {
-            for (String sObjectName : new String[]{"Account", "Opportunity", "User"}) {
+            for (String sObjectName : new String[]{"Opportunity", "User", "Account", "Contact"}) {
                 connection.addSObjectData(new SObjectData(connection.getName(), sObjectName));
             }
             }

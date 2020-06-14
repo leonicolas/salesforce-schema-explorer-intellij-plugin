@@ -1,7 +1,10 @@
 package com.schemaexplorer.model;
 
+import com.google.common.collect.ImmutableSortedSet;
+
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -20,6 +23,13 @@ public class SalesforceConnection implements Serializable {
 
     public Set<SObjectData> getSObjectDataSet() {
         return Collections.unmodifiableSet(this.sObjectDataSet);
+    }
+
+    public Set<SObjectData> getSortedSObjectDataSet() {
+        return ImmutableSortedSet.copyOf(
+            Comparator.comparing(SObjectData::getName),
+            this.sObjectDataSet
+        );
     }
 
     public String getName() {
