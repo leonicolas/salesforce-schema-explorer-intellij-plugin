@@ -65,18 +65,18 @@ public class SchemaExplorerWindow {
             CheckedTreeNode sObjectNode = createNewCheckedTreeNode(connectionNode, sObjectData);
             loadFields(sObjectData, sObjectNode);
         });
-        if(connection.getSObjectDataSet().isEmpty()) {
+        if(!connection.hasObjects()) {
             addLoadingNode(connectionNode);
         }
     }
 
     private void loadFields(SObjectData sObjectData, CheckedTreeNode sObjectNode) {
         sObjectNode.removeAllChildren();
-        if(sObjectData.getFields().isEmpty()) {
-            addLoadingNode(sObjectNode);
-        } else {
+        if(sObjectData.hasFields()) {
             sObjectData.getSortedFields().forEach(fieldData -> createNewCheckedTreeNode(sObjectNode, fieldData));
             sObjectsTree.expandPath(new TreePath(sObjectNode.getPath()));
+        } else {
+            addLoadingNode(sObjectNode);
         }
     }
 
@@ -148,14 +148,14 @@ public class SchemaExplorerWindow {
 
                 if (node.getUserObject() instanceof SalesforceConnection) {
                     SalesforceConnection connection = (SalesforceConnection) node.getUserObject();
-                    if(connection.getSObjectDataSet().isEmpty()) {
+                    if(!connection.hasObjects()) {
                         connectionLoadDispatcher.getMulticaster().onConnectionLoad(connection);
                         loadSObjects(connection, node);
                     }
 
                 } else if (node.getUserObject() instanceof SObjectData) {
                     SObjectData sObjectData = (SObjectData) node.getUserObject();
-                    if(sObjectData.getFields().isEmpty()) {
+                    if(!sObjectData.hasFields()) {
                         triggerOnSObjectLoadEvent(node);
                     }
                 }

@@ -32,6 +32,10 @@ public class SalesforceConnection implements Serializable {
         );
     }
 
+    public Boolean hasObjects() {
+        return !this.sObjectDataSet.isEmpty();
+    }
+
     public String getName() {
         return name;
     }
