@@ -18,19 +18,30 @@ public class SchemaExplorerTreeCellRenderer extends CheckboxTree.CheckboxTreeCel
         }
 
         Object nodeData = ((DefaultMutableTreeNode) node).getUserObject();
-        String nodeText = "";
         if(nodeData instanceof String) {
-            nodeText = (String) nodeData;
+            getTextRenderer().append((String) nodeData);
         }
         else if(nodeData instanceof SalesforceConnection) {
-            nodeText = ((SalesforceConnection) nodeData).getName();
+            renderSalesforceConnection((SalesforceConnection) nodeData);
         }
         else if(nodeData instanceof SObjectData) {
-            nodeText = ((SObjectData) nodeData).getName();
+            String nodeText = ((SObjectData) nodeData).getName();
+            getTextRenderer().append(nodeText);
         }
         else if(nodeData instanceof FieldData) {
-            nodeText = ((FieldData) nodeData).getName();
+            String nodeText = ((FieldData) nodeData).getName();
+            getTextRenderer().append(nodeText);
+        } else {
+            getTextRenderer().append("");
         }
-        getTextRenderer().append(nodeText);
+    }
+
+    private void renderSalesforceConnection(SalesforceConnection connection) {
+        if(connection.hasObjects()) {
+            getTextRenderer().setIcon(ImageResources.CONNECTION_ON);
+        } else {
+            getTextRenderer().setIcon(ImageResources.CONNECTION_OFF);
+        }
+        getTextRenderer().append(connection.getName());
     }
 }
