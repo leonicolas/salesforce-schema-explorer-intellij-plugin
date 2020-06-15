@@ -9,6 +9,12 @@ public class SObjectData implements Serializable {
 
     private final String connectionName;
     private final String name;
+    public String label;
+    public Boolean createable;
+    public Boolean custom;
+    public Boolean customSetting;
+    public String username;
+    public String instanceUrl;
     private Set<FieldData> fields = new HashSet<>();
 
     public SObjectData(SObjectData sObjectData) {
