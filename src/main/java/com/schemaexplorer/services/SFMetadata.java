@@ -1,5 +1,6 @@
 package com.schemaexplorer.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -20,45 +21,43 @@ import java.util.List;
 
 public class SFMetadata {
 
-    public static List<SObject> getSObject(final String accessToken, final String instanceUrl) {
+    private String accessToken;
+    private String instanceUrl;
+    private ObjectMapper mapper;
 
-        List<SObject> objectInfoList = new ArrayList<>();
+    public SFMetadata(String accessToken, String instanceUrl) {
+        this.accessToken = accessToken;
+        this.instanceUrl = instanceUrl;
+    }
+
+    public List<JsonNode> getJSONNodes(String serviceUrl, String key) {
+        List<JsonNode> JsonNodeSObjectList = new ArrayList<>();
         try {
             final CloseableHttpClient httpclient = HttpClients.createDefault();
-            final ObjectMapper mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
-            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            this.mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+            this.mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-
-
-//            final String accessToken = MetadataLoginUtil.getLoginResult().getSessionId();
-//            final String instanceUrl = MetadataLoginUtil.getLoginResult().getServerUrl().split("\\/services")[0];
-
-
-
-            final URIBuilder builder = new URIBuilder(instanceUrl);
-            builder.setPath("/services/data/v48.0/sobjects");
+            final URIBuilder builder = new URIBuilder(this.instanceUrl);
+            builder.setPath(serviceUrl);
             System.out.println(builder.getPath());
             System.out.println(builder.build());
             final HttpGet get = new HttpGet(builder.build());
-            get.setHeader("Authorization", "Bearer " + accessToken);
+            get.setHeader("Authorization", "Bearer " + this.accessToken);
 
             final HttpResponse queryResponse = httpclient.execute(get);
             // System.out.println(queryResponse.getEntity().getContent());
 
-            final JsonNode queryResults = mapper.readValue(queryResponse.getEntity().getContent(), JsonNode.class);
+            final JsonNode queryResults = this.mapper.readValue(queryResponse.getEntity().getContent(), JsonNode.class);
 
             // System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(queryResults));
 
-            JsonNode objectInfo = queryResults.get("sobjects");
-            System.out.println(objectInfo.size());
+            JsonNode node = queryResults.get(key);
+            System.out.println(node.size());
 
-            List<JsonNode> JsonNodeSObjectList = mapper.readValue(objectInfo.toString(), new TypeReference<List<JsonNode>>(){});
+            JsonNodeSObjectList = this.mapper.readValue(node.toString(), new TypeReference<List<JsonNode>>(){});
             System.out.println(JsonNodeSObjectList.size());
-            for(JsonNode object : JsonNodeSObjectList) {
-                SObject objectInformation = mapper.readValue(object.toString(), SObject.class);
-                objectInfoList.add(objectInformation);
-            }
-            return objectInfoList;
+            return JsonNodeSObjectList;
+
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -66,49 +65,40 @@ public class SFMetadata {
         catch (URISyntaxException e) {
             e.printStackTrace();
         }
-
-        return objectInfoList;
+        return JsonNodeSObjectList;
     }
 
-    public static List<Field> getFieldData(String objectAPIName, final String accessToken, final String instanceUrl) {
+    public List<SObject> getSObject() {
+
+        List<SObject> objectInfoList = new ArrayList<>();
+
+        for(JsonNode object : this.getJSONNodes("/services/data/v48.0/sobjects", "sobjects")) {
+            SObject objectInformation = null;
+            try {
+                objectInformation = this.mapper.readValue(object.toString(), SObject.class);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+            objectInfoList.add(objectInformation);
+        }
+        return objectInfoList;
+
+    }
+
+    public List<Field> getFieldData(String objectAPIName) {
         List<Field> fieldInfoList = new ArrayList<>();
 
-        try {
-            final CloseableHttpClient httpclient = HttpClients.createDefault();
-            final ObjectMapper mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
-            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
-
-
-            final URIBuilder builder = new URIBuilder(instanceUrl);
-            String url = "/services/data/v48.0/sobjects/"+objectAPIName+"/describe";
-            builder.setPath(url);
-            final HttpGet get = new HttpGet(builder.build());
-            get.setHeader("Authorization", "Bearer " + accessToken);
-
-            final HttpResponse queryResponse = httpclient.execute(get);
-
-            final JsonNode queryResults = mapper.readValue(queryResponse.getEntity().getContent(), JsonNode.class);
-
-            System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(queryResults));
-
-            JsonNode fieldInfo = queryResults.get("fields");
-            System.out.println(fieldInfo.size());
-            List<JsonNode> JsonNodefieldInfoList = mapper.readValue(fieldInfo.toString(), new TypeReference<List<JsonNode>>(){});
-            System.out.println(JsonNodefieldInfoList.size());
-            for(JsonNode field : JsonNodefieldInfoList) {
-                Field fieldInformation = mapper.readValue(field.toString(), Field.class);
-                fieldInfoList.add(fieldInformation);
+        for(JsonNode field : this.getJSONNodes("/services/data/v48.0/sobjects/"+objectAPIName+"/describe", "fields")) {
+            Field fieldInformation = null;
+            try {
+                fieldInformation = this.mapper.readValue(field.toString(), Field.class);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
             }
-            return fieldInfoList;
-
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-        catch (URISyntaxException e) {
-            e.printStackTrace();
+            fieldInfoList.add(fieldInformation);
         }
         return fieldInfoList;
     }
+
+
 }
