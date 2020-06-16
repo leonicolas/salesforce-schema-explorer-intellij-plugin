@@ -35,14 +35,12 @@ public class SchemaExplorerWindowFactory implements ToolWindowFactory {
             public void onSObjectLoad(@NotNull SObjectData sObjectData) {
                 String accessToken = MetadataLoginUtil.getAccessToken(sObjectData.username);
                 System.out.println(accessToken);
-                List<Field> fieldDataList = SFMetadata.getFieldData(sObjectData.getName(), accessToken, sObjectData.instanceUrl);
+                SFMetadata sfMetadata = new SFMetadata(accessToken, sObjectData.instanceUrl);
+                List<Field> fieldDataList = sfMetadata.getFieldData(sObjectData.getName());
                 System.out.println(fieldDataList.size());
                 for (Field field : fieldDataList) {
                     sObjectData.addField(new FieldData(field.name));
                 }
-//            for (String fieldName : new String[]{"Id", "Name", "Custom_Field__c", "CreatedDate"}) {
-//                sObjectData.addField(new FieldData(fieldName));
-//            }
             }
         };
     }
@@ -55,7 +53,8 @@ public class SchemaExplorerWindowFactory implements ToolWindowFactory {
 //                System.out.println(connection.getInstanceUrl());
                 String accessToken = MetadataLoginUtil.getAccessToken(connection.getUsername());
                 System.out.println(accessToken);
-                List<SObject> sObjectDataList = SFMetadata.getSObject(accessToken, connection.getInstanceUrl());
+                SFMetadata sfMetadata = new SFMetadata(accessToken, connection.getInstanceUrl());
+                List<SObject> sObjectDataList = sfMetadata.getSObject();
                 System.out.println(sObjectDataList.size());
 
                 for (SObject sObject : sObjectDataList) {
