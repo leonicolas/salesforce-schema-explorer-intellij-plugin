@@ -5,9 +5,10 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
-import com.schemaexplorer.model.FieldData;
-import com.schemaexplorer.model.SObjectData;
-import com.schemaexplorer.model.SalesforceConnection;
+import com.schemaexplorer.model.*;
+import com.schemaexplorer.services.SFConnections;
+import com.schemaexplorer.services.SFMetadata;
+import com.schemaexplorer.util.MetadataLoginUtil;
 import com.schemaexplorer.view.ConnectionLoadListener;
 import com.schemaexplorer.view.SObjectLoadListener;
 import com.schemaexplorer.view.SchemaExplorerWindow;
@@ -18,25 +19,27 @@ import java.util.List;
 public class SchemaExplorerWindowFactory implements ToolWindowFactory {
 
     private SchemaExplorerWindow schemaExplorerWindow = new SchemaExplorerWindow();
+    private SFConnections sfConnections = new SFConnections();
 
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
         initializePluginContent(toolWindow);
         this.schemaExplorerWindow.addConnectionLoadListener(createConnectionLoadListener());
         this.schemaExplorerWindow.addSObjectLoadListener(createSObjectLoadListener());
-        this.schemaExplorerWindow.loadSalesforceConnections(List.of(
-            new SalesforceConnection("Connection 3"),
-            new SalesforceConnection("Connection 1"),
-            new SalesforceConnection("Connection 2")
-        ));
+        this.schemaExplorerWindow.loadSalesforceConnections(sfConnections.getSFDXConnections());
     }
 
     private SObjectLoadListener createSObjectLoadListener() {
         return new SObjectLoadListener() {
             @Override
             public void onSObjectLoad(@NotNull SObjectData sObjectData) {
-                for (String fieldName : new String[]{"Id", "Name", "Custom_Field__c", "CreatedDate"}) {
-                    sObjectData.addField(new FieldData(fieldName));
+                String accessToken = MetadataLoginUtil.getAccessToken(sObjectData.username);
+                System.out.println(accessToken);
+                SFMetadata sfMetadata = new SFMetadata(accessToken, sObjectData.instanceUrl);
+                List<Field> fieldDataList = sfMetadata.getFieldData(sObjectData.getName());
+                System.out.println(fieldDataList.size());
+                for (Field field : fieldDataList) {
+                    sObjectData.addField(new FieldData(field.name));
                 }
             }
         };
@@ -46,8 +49,19 @@ public class SchemaExplorerWindowFactory implements ToolWindowFactory {
         return new ConnectionLoadListener() {
             @Override
             public void onConnectionLoad(@NotNull SalesforceConnection connection) {
-                for (String sObjectName : new String[]{"Opportunity", "User", "Account", "Contact"}) {
-                    connection.addSObjectData(new SObjectData(connection.getName(), sObjectName));
+//                System.out.println(connection.getAccessToken());
+//                System.out.println(connection.getInstanceUrl());
+                String accessToken = MetadataLoginUtil.getAccessToken(connection.getUsername());
+                System.out.println(accessToken);
+                SFMetadata sfMetadata = new SFMetadata(accessToken, connection.getInstanceUrl());
+                List<SObject> sObjectDataList = sfMetadata.getSObject();
+                System.out.println(sObjectDataList.size());
+
+                for (SObject sObject : sObjectDataList) {
+                    SObjectData sobjectData = new SObjectData(connection.getName(), sObject.name);
+                    sobjectData.username = connection.getUsername();
+                    sobjectData.instanceUrl = connection.getInstanceUrl();
+                    connection.addSObjectData(sobjectData);
                 }
             }
         };
