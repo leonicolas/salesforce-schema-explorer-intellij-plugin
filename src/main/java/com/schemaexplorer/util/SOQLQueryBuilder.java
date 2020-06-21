@@ -13,12 +13,12 @@ public class SOQLQueryBuilder {
     public static String buildQuery(String currentSOQLText, Collection<SObject> sObjectDataSet) {
         StringBuilder sb = new StringBuilder();
         for(SObject sObjectData : sObjectDataSet) {
-            if(!sObjectData.hasFields()) {
+            if(!sObjectData.hasChildrenObjects()) {
                 continue;
             }
 
             Set<String> fieldsNames = new HashSet<>();
-            sObjectData.getFields().forEach(fieldData -> fieldsNames.add(fieldData.getName()));
+            sObjectData.getChildrenObjects().forEach(fieldData -> fieldsNames.add(fieldData.getName()));
 
             Pattern soqlPattern = Pattern.compile(String.format("(?<=FROM %s)[^;]*", sObjectData.getName()));
             Matcher soqlMatcher = soqlPattern.matcher(currentSOQLText);

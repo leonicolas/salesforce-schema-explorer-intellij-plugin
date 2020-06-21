@@ -63,17 +63,17 @@ public class SchemaExplorerWindow {
         connectionNode.removeAllChildren();
         connection.getSortedSObjectDataSet().forEach(sObjectData -> {
             CheckedTreeNode sObjectNode = createNewCheckedTreeNode(connectionNode, sObjectData);
-            loadFields(sObjectData, sObjectNode);
+            loadChildrenObjects(sObjectData, sObjectNode);
         });
         if(!connection.hasObjects()) {
             addLoadingNode(connectionNode);
         }
     }
 
-    private void loadFields(SObject sObjectData, CheckedTreeNode sObjectNode) {
+    private void loadChildrenObjects(SObject sObjectData, CheckedTreeNode sObjectNode) {
         sObjectNode.removeAllChildren();
-        if(sObjectData.hasFields()) {
-            sObjectData.getSortedFields().forEach(fieldData -> createNewCheckedTreeNode(sObjectNode, fieldData));
+        if(sObjectData.hasChildrenObjects()) {
+            sObjectData.getSortedChildrenObjects().forEach(childObject -> createNewCheckedTreeNode(sObjectNode, childObject));
             sObjectsTree.expandPath(new TreePath(sObjectNode.getPath()));
         } else {
             addLoadingNode(sObjectNode);
@@ -155,7 +155,7 @@ public class SchemaExplorerWindow {
 
                 } else if (node.getUserObject() instanceof SObject) {
                     SObject sObjectData = (SObject) node.getUserObject();
-                    if(!sObjectData.hasFields()) {
+                    if(!sObjectData.hasChildrenObjects()) {
                         triggerOnSObjectLoadEvent(node);
                     }
                 }
@@ -173,8 +173,8 @@ public class SchemaExplorerWindow {
         DefaultMutableTreeNode connectionNode = (DefaultMutableTreeNode) sObjectNode.getParent();
         SalesforceConnection connection = (SalesforceConnection) connectionNode.getUserObject();
         sObjectLoadDispatcher.getMulticaster().onSObjectLoad(connection, sObject);
-        if(sObject.hasFields()) {
-            loadFields(sObject, (CheckedTreeNode) sObjectNode);
+        if(sObject.hasChildrenObjects()) {
+            loadChildrenObjects(sObject, (CheckedTreeNode) sObjectNode);
         }
     }
 
@@ -196,7 +196,7 @@ public class SchemaExplorerWindow {
                 SObject sObjectData = (SObject) node.getUserObject();
 
                 // Calls the loading event.
-                if(!sObjectData.hasFields()) {
+                if(!sObjectData.hasChildrenObjects()) {
                     triggerOnSObjectLoadEvent(node);
                 }
 
@@ -250,7 +250,7 @@ public class SchemaExplorerWindow {
                 if (!sObjectDataMap.containsKey(sObjectData.getName())) {
                     sObjectDataMap.put(sObjectData.getName(), new SObject(sObjectData));
                 }
-                sObjectDataMap.get(sObjectData.getName()).addField(fieldData);
+                sObjectDataMap.get(sObjectData.getName()).addChildObject(fieldData);
             }
 
             private void unselectFieldNode(CheckedTreeNode fieldNode) {
@@ -265,7 +265,7 @@ public class SchemaExplorerWindow {
                 if (!sObjectDataMap.containsKey(sObjectData.getName())) {
                     return;
                 }
-                sObjectDataMap.get(sObjectData.getName()).removeField(fieldData);
+                sObjectDataMap.get(sObjectData.getName()).removeChildObject(fieldData);
             }
 
             private void updateSOQLText(SalesforceConnection connection) {

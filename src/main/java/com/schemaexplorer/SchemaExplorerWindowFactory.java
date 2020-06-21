@@ -38,7 +38,7 @@ public class SchemaExplorerWindowFactory implements ToolWindowFactory {
                 SFMetadata sfMetadata = new SFMetadata(accessToken, connection.getInstanceUrl());
                 List<Field> fields = sfMetadata.getFieldData(sObject.getName());
                 System.out.println(fields.size());
-                sObject.addFields(fields);
+                sObject.addChildrenObjects(fields);
             }
         };
     }

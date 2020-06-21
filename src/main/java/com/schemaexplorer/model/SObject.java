@@ -13,7 +13,7 @@ public class SObject extends SalesforceObject implements Serializable {
     private Boolean custom;
     private Boolean customSetting;
 
-    private Set<Field> fields = new HashSet<>();
+    private Set<SalesforceObject> childrenObjects = new HashSet<SalesforceObject>();
 
     public SObject() {
         super();
@@ -59,39 +59,35 @@ public class SObject extends SalesforceObject implements Serializable {
         this.customSetting = customSetting;
     }
 
-    public void setFields(Set<Field> fields) {
-        this.fields = fields;
+    public <T extends SalesforceObject> void addChildObject(T childObject) {
+        this.childrenObjects.add(childObject);
     }
 
-    public void addField(Field field) {
-        this.fields.add(field);
+    public void addChildrenObjects(List<? extends SalesforceObject> childrenObjects) {
+        this.childrenObjects.addAll(childrenObjects);
     }
 
-    public void addFields(List<Field> fields) {
-        this.fields.addAll(fields);
+    public <T extends SalesforceObject> void removeChildObject(T childObject) {
+        this.childrenObjects.remove(childObject);
     }
 
-    public void removeField(Field field) {
-        this.fields.remove(field);
+    public Set<? extends SalesforceObject> getChildrenObjects() {
+        return Collections.unmodifiableSet(this.childrenObjects);
     }
 
-    public Set<Field> getFields() {
-        return Collections.unmodifiableSet(this.fields);
-    }
-
-    public Set<Field> getSortedFields() {
+    public Set<? extends SalesforceObject> getSortedChildrenObjects() {
         return ImmutableSortedSet.copyOf(
-                Comparator.comparing(Field::getName),
-                this.fields
+            Comparator.comparing(SalesforceObject::getName),
+            this.childrenObjects
         );
     }
 
-    public void clearFields() {
-        this.fields.clear();
+    public void clearChildrenObjects() {
+        this.childrenObjects.clear();
     }
 
-    public boolean hasFields() {
-        return !this.fields.isEmpty();
+    public boolean hasChildrenObjects() {
+        return !this.childrenObjects.isEmpty();
     }
 
     @Override
