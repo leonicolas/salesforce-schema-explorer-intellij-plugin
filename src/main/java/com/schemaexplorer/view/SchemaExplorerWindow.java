@@ -5,8 +5,8 @@ import com.intellij.ui.CheckboxTreeListener;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.EventDispatcher;
-import com.schemaexplorer.model.FieldData;
-import com.schemaexplorer.model.SObjectData;
+import com.schemaexplorer.model.Field;
+import com.schemaexplorer.model.SObject;
 import com.schemaexplorer.model.SalesforceConnection;
 import com.schemaexplorer.util.SOQLQueryBuilder;
 import org.apache.commons.lang3.SerializationUtils;
@@ -29,7 +29,7 @@ public class SchemaExplorerWindow {
     private final EventDispatcher<SObjectLoadListener> sObjectLoadDispatcher =
             EventDispatcher.create(SObjectLoadListener.class);
 
-    private Map<SalesforceConnection, Map<String, SObjectData>> selectedFieldsByConnection = new HashMap<>();
+    private Map<SalesforceConnection, Map<String, SObject>> selectedFieldsByConnection = new HashMap<>();
 
     public JPanel getContent() {
         return panel;
@@ -70,7 +70,7 @@ public class SchemaExplorerWindow {
         }
     }
 
-    private void loadFields(SObjectData sObjectData, CheckedTreeNode sObjectNode) {
+    private void loadFields(SObject sObjectData, CheckedTreeNode sObjectNode) {
         sObjectNode.removeAllChildren();
         if(sObjectData.hasFields()) {
             sObjectData.getSortedFields().forEach(fieldData -> createNewCheckedTreeNode(sObjectNode, fieldData));
@@ -153,8 +153,8 @@ public class SchemaExplorerWindow {
                         loadSObjects(connection, node);
                     }
 
-                } else if (node.getUserObject() instanceof SObjectData) {
-                    SObjectData sObjectData = (SObjectData) node.getUserObject();
+                } else if (node.getUserObject() instanceof SObject) {
+                    SObject sObjectData = (SObject) node.getUserObject();
                     if(!sObjectData.hasFields()) {
                         triggerOnSObjectLoadEvent(node);
                     }
@@ -169,10 +169,12 @@ public class SchemaExplorerWindow {
     }
 
     private void triggerOnSObjectLoadEvent(DefaultMutableTreeNode sObjectNode) {
-        SObjectData sObjectData = (SObjectData) sObjectNode.getUserObject();
-        sObjectLoadDispatcher.getMulticaster().onSObjectLoad(sObjectData);
-        if(sObjectData.hasFields()) {
-            loadFields(sObjectData, (CheckedTreeNode) sObjectNode);
+        SObject sObject = (SObject) sObjectNode.getUserObject();
+        DefaultMutableTreeNode connectionNode = (DefaultMutableTreeNode) sObjectNode.getParent();
+        SalesforceConnection connection = (SalesforceConnection) connectionNode.getUserObject();
+        sObjectLoadDispatcher.getMulticaster().onSObjectLoad(connection, sObject);
+        if(sObject.hasFields()) {
+            loadFields(sObject, (CheckedTreeNode) sObjectNode);
         }
     }
 
@@ -183,15 +185,15 @@ public class SchemaExplorerWindow {
 
             @Override
             public void nodeStateChanged(@NotNull CheckedTreeNode node) {
-                if (node.getUserObject() instanceof FieldData) {
+                if (node.getUserObject() instanceof Field) {
                     updateSelectedField(node);
-                } else if (node.getUserObject() instanceof SObjectData) {
+                } else if (node.getUserObject() instanceof SObject) {
                     updateSelectedSObject(node);
                 }
             }
 
             private void updateSelectedSObject(CheckedTreeNode node) {
-                SObjectData sObjectData = (SObjectData) node.getUserObject();
+                SObject sObjectData = (SObject) node.getUserObject();
 
                 // Calls the loading event.
                 if(!sObjectData.hasFields()) {
@@ -238,15 +240,15 @@ public class SchemaExplorerWindow {
                 DefaultMutableTreeNode connectionNode = (DefaultMutableTreeNode) sObjectNode.getParent();
 
                 SalesforceConnection connection = (SalesforceConnection) connectionNode.getUserObject();
-                SObjectData sObjectData = (SObjectData) sObjectNode.getUserObject();
-                FieldData fieldData = (FieldData) fieldNode.getUserObject();
+                SObject sObjectData = (SObject) sObjectNode.getUserObject();
+                Field fieldData = (Field) fieldNode.getUserObject();
 
                 if (!selectedFieldsByConnection.containsKey(connection)) {
                     selectedFieldsByConnection.put(connection, new HashMap<>());
                 }
-                Map<String, SObjectData> sObjectDataMap = selectedFieldsByConnection.get(connection);
+                Map<String, SObject> sObjectDataMap = selectedFieldsByConnection.get(connection);
                 if (!sObjectDataMap.containsKey(sObjectData.getName())) {
-                    sObjectDataMap.put(sObjectData.getName(), new SObjectData(sObjectData));
+                    sObjectDataMap.put(sObjectData.getName(), new SObject(sObjectData));
                 }
                 sObjectDataMap.get(sObjectData.getName()).addField(fieldData);
             }
@@ -256,10 +258,10 @@ public class SchemaExplorerWindow {
                 DefaultMutableTreeNode connectionNode = (DefaultMutableTreeNode) sObjectNode.getParent();
 
                 SalesforceConnection connection = (SalesforceConnection) connectionNode.getUserObject();
-                SObjectData sObjectData = (SObjectData) sObjectNode.getUserObject();
-                FieldData fieldData = (FieldData) fieldNode.getUserObject();
+                SObject sObjectData = (SObject) sObjectNode.getUserObject();
+                Field fieldData = (Field) fieldNode.getUserObject();
 
-                Map<String, SObjectData> sObjectDataMap = selectedFieldsByConnection.get(connection);
+                Map<String, SObject> sObjectDataMap = selectedFieldsByConnection.get(connection);
                 if (!sObjectDataMap.containsKey(sObjectData.getName())) {
                     return;
                 }
@@ -268,7 +270,7 @@ public class SchemaExplorerWindow {
 
             private void updateSOQLText(SalesforceConnection connection) {
                 JTextArea queryTextArea = getQueryTextArea(connection);
-                Map<String, SObjectData> sObjectDataMap = selectedFieldsByConnection.get(connection);
+                Map<String, SObject> sObjectDataMap = selectedFieldsByConnection.get(connection);
                 if (sObjectDataMap == null) {
                     return;
                 }

@@ -7,8 +7,12 @@ import java.util.Map;
 import com.schemaexplorer.model.SalesforceConnection;
 import com.schemaexplorer.util.Commands;
 import com.schemaexplorer.util.Constants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SFConnections {
+
+    private static final Logger logger = LoggerFactory.getLogger(SFConnections.class);
     private final String SFDX_ORG_LIST_COMMAND = "sfdx force:org:list --json";
 
     public List<SalesforceConnection> getSFDXConnections() {

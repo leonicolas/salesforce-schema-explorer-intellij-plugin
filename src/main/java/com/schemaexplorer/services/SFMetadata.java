@@ -30,7 +30,7 @@ public class SFMetadata {
         this.instanceUrl = instanceUrl;
     }
 
-    public List<JsonNode> getJSONNodes(String serviceUrl, String key) {
+    private List<JsonNode> getJSONNodes(String serviceUrl, String key) {
         List<JsonNode> JsonNodeSObjectList = new ArrayList<>();
         try {
             final CloseableHttpClient httpclient = HttpClients.createDefault();
@@ -69,20 +69,17 @@ public class SFMetadata {
     }
 
     public List<SObject> getSObject() {
-
         List<SObject> objectInfoList = new ArrayList<>();
 
-        for(JsonNode object : this.getJSONNodes("/services/data/v48.0/sobjects", "sobjects")) {
-            SObject objectInformation = null;
+        for(JsonNode sObjectNode : this.getJSONNodes("/services/data/v48.0/sobjects", "sobjects")) {
             try {
-                objectInformation = this.mapper.readValue(object.toString(), SObject.class);
-            } catch (JsonProcessingException e) {
+                SObject objectInformation = this.mapper.convertValue(sObjectNode, SObject.class);
+                objectInfoList.add(objectInformation);
+            } catch (Exception e) {
                 e.printStackTrace();
             }
-            objectInfoList.add(objectInformation);
         }
         return objectInfoList;
-
     }
 
     public List<Field> getFieldData(String objectAPIName) {
@@ -91,14 +88,12 @@ public class SFMetadata {
         for(JsonNode field : this.getJSONNodes("/services/data/v48.0/sobjects/"+objectAPIName+"/describe", "fields")) {
             Field fieldInformation = null;
             try {
-                fieldInformation = this.mapper.readValue(field.toString(), Field.class);
-            } catch (JsonProcessingException e) {
+                fieldInformation = this.mapper.convertValue(field, Field.class);
+                fieldInfoList.add(fieldInformation);
+            } catch (Exception e) {
                 e.printStackTrace();
             }
-            fieldInfoList.add(fieldInformation);
         }
         return fieldInfoList;
     }
-
-
 }

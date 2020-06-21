@@ -1,6 +1,6 @@
 package com.schemaexplorer.util;
 
-import com.schemaexplorer.model.SObjectData;
+import com.schemaexplorer.model.SObject;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -10,9 +10,9 @@ import java.util.regex.Pattern;
 
 public class SOQLQueryBuilder {
 
-    public static String buildQuery(String currentSOQLText, Collection<SObjectData> sObjectDataSet) {
+    public static String buildQuery(String currentSOQLText, Collection<SObject> sObjectDataSet) {
         StringBuilder sb = new StringBuilder();
-        for(SObjectData sObjectData : sObjectDataSet) {
+        for(SObject sObjectData : sObjectDataSet) {
             if(!sObjectData.hasFields()) {
                 continue;
             }

@@ -3,11 +3,7 @@ package com.schemaexplorer.model;
 import com.google.common.collect.ImmutableSortedSet;
 
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class SalesforceConnection implements Serializable {
 
@@ -17,7 +13,7 @@ public class SalesforceConnection implements Serializable {
     private final String accessToken;
     private final String orgType;
     private final String instanceUrl;
-    private final Set<SObjectData> sObjectDataSet = new HashSet<>();
+    private final Set<SObject> sObjectDataSet = new HashSet<>();
 
     public SalesforceConnection(Map<String, String> moreInfo, String orgType) {
         this.moreInfo = moreInfo;
@@ -28,17 +24,24 @@ public class SalesforceConnection implements Serializable {
         this.instanceUrl = moreInfo.get("instanceUrl");
     }
 
-    public void addSObjectData(SObjectData sObjectData) {
-        this.sObjectDataSet.add(sObjectData);
+    public void addSObject(SObject sObject) {
+        this.sObjectDataSet.add(sObject);
     }
 
-    public Set<SObjectData> getSObjectDataSet() {
+    public void addSObjects(List<SObject> sObjects) {
+        sObjects.forEach(sObject -> {
+            sObject.setConnectionName(this.getName());
+            addSObject(sObject);
+        });
+    }
+
+    public Set<SObject> getSObjectDataSet() {
         return Collections.unmodifiableSet(this.sObjectDataSet);
     }
 
-    public Set<SObjectData> getSortedSObjectDataSet() {
+    public Set<SObject> getSortedSObjectDataSet() {
         return ImmutableSortedSet.copyOf(
-            Comparator.comparing(SObjectData::getName),
+            Comparator.comparing(SObject::getName),
             this.sObjectDataSet
         );
     }
@@ -54,13 +57,20 @@ public class SalesforceConnection implements Serializable {
     public Map<String, String> getMoreInfo() {
         return moreInfo;
     }
+
     public String getUsername() {
         return username;
     }
+
     public String getAccessToken() {
         return accessToken;
     }
+
     public String getInstanceUrl() {
         return instanceUrl;
+    }
+
+    public String getOrgType() {
+        return orgType;
     }
 }

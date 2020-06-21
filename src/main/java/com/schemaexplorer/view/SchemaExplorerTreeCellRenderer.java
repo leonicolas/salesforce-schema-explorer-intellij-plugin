@@ -1,8 +1,8 @@
 package com.schemaexplorer.view;
 
 import com.intellij.ui.CheckboxTree;
-import com.schemaexplorer.model.FieldData;
-import com.schemaexplorer.model.SObjectData;
+import com.schemaexplorer.model.Field;
+import com.schemaexplorer.model.SObject;
 import com.schemaexplorer.model.SalesforceConnection;
 
 import javax.swing.*;
@@ -24,12 +24,12 @@ public class SchemaExplorerTreeCellRenderer extends CheckboxTree.CheckboxTreeCel
         else if(nodeData instanceof SalesforceConnection) {
             renderSalesforceConnection((SalesforceConnection) nodeData);
         }
-        else if(nodeData instanceof SObjectData) {
-            String nodeText = ((SObjectData) nodeData).getName();
+        else if(nodeData instanceof SObject) {
+            String nodeText = ((SObject) nodeData).getName();
             getTextRenderer().append(nodeText);
         }
-        else if(nodeData instanceof FieldData) {
-            String nodeText = ((FieldData) nodeData).getName();
+        else if(nodeData instanceof Field) {
+            String nodeText = ((Field) nodeData).getName();
             getTextRenderer().append(nodeText);
         } else {
             getTextRenderer().append("");

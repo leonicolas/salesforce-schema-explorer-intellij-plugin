@@ -32,15 +32,13 @@ public class SchemaExplorerWindowFactory implements ToolWindowFactory {
     private SObjectLoadListener createSObjectLoadListener() {
         return new SObjectLoadListener() {
             @Override
-            public void onSObjectLoad(@NotNull SObjectData sObjectData) {
-                String accessToken = MetadataLoginUtil.getAccessToken(sObjectData.username);
+            public void onSObjectLoad(@NotNull SalesforceConnection connection, @NotNull SObject sObject) {
+                String accessToken = MetadataLoginUtil.getAccessToken(connection.getUsername());
                 System.out.println(accessToken);
-                SFMetadata sfMetadata = new SFMetadata(accessToken, sObjectData.instanceUrl);
-                List<Field> fieldDataList = sfMetadata.getFieldData(sObjectData.getName());
-                System.out.println(fieldDataList.size());
-                for (Field field : fieldDataList) {
-                    sObjectData.addField(new FieldData(field.name));
-                }
+                SFMetadata sfMetadata = new SFMetadata(accessToken, connection.getInstanceUrl());
+                List<Field> fields = sfMetadata.getFieldData(sObject.getName());
+                System.out.println(fields.size());
+                sObject.addFields(fields);
             }
         };
     }
@@ -49,20 +47,12 @@ public class SchemaExplorerWindowFactory implements ToolWindowFactory {
         return new ConnectionLoadListener() {
             @Override
             public void onConnectionLoad(@NotNull SalesforceConnection connection) {
-//                System.out.println(connection.getAccessToken());
-//                System.out.println(connection.getInstanceUrl());
                 String accessToken = MetadataLoginUtil.getAccessToken(connection.getUsername());
                 System.out.println(accessToken);
                 SFMetadata sfMetadata = new SFMetadata(accessToken, connection.getInstanceUrl());
                 List<SObject> sObjectDataList = sfMetadata.getSObject();
                 System.out.println(sObjectDataList.size());
-
-                for (SObject sObject : sObjectDataList) {
-                    SObjectData sobjectData = new SObjectData(connection.getName(), sObject.name);
-                    sobjectData.username = connection.getUsername();
-                    sobjectData.instanceUrl = connection.getInstanceUrl();
-                    connection.addSObjectData(sobjectData);
-                }
+                connection.addSObjects(sObjectDataList);
             }
         };
     }
