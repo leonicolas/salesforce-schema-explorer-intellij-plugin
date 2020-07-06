@@ -1,57 +1,25 @@
 package com.schemaexplorer.model;
 
-import com.google.common.collect.ImmutableSortedSet;
+import java.util.Map;
 
-import java.io.Serializable;
-import java.util.*;
+public class SalesforceConnection extends SalesforceObject {
 
-public class SalesforceConnection implements Serializable {
-
-    private final Map<String, String> moreInfo;
-    private final String name;
-    private final String username;
-    private final String accessToken;
-    private final String orgType;
-    private final String instanceUrl;
-    private final Set<SObject> sObjectDataSet = new HashSet<>();
+    private Map<String, String> moreInfo;
+    private String username;
+    private String accessToken;
+    private String orgType;
+    private String instanceUrl;
+    private String alias;
+    private boolean loading = false;
 
     public SalesforceConnection(Map<String, String> moreInfo, String orgType) {
         this.moreInfo = moreInfo;
-        this.name = moreInfo.get("alias")+" | "+this.moreInfo.get("username")+" | "+orgType;
         this.accessToken = moreInfo.get("accessToken");
         this.orgType = orgType;
+        this.alias = moreInfo.get("username");
         this.username = moreInfo.get("username");
         this.instanceUrl = moreInfo.get("instanceUrl");
-    }
-
-    public void addSObject(SObject sObject) {
-        this.sObjectDataSet.add(sObject);
-    }
-
-    public void addSObjects(List<SObject> sObjects) {
-        sObjects.forEach(sObject -> {
-            sObject.setConnectionName(this.getName());
-            addSObject(sObject);
-        });
-    }
-
-    public Set<SObject> getSObjectDataSet() {
-        return Collections.unmodifiableSet(this.sObjectDataSet);
-    }
-
-    public Set<SObject> getSortedSObjectDataSet() {
-        return ImmutableSortedSet.copyOf(
-            Comparator.comparing(SObject::getName),
-            this.sObjectDataSet
-        );
-    }
-
-    public Boolean hasObjects() {
-        return !this.sObjectDataSet.isEmpty();
-    }
-
-    public String getName() {
-        return name;
+        this.setName(String.format("%s | %s | %s", this.alias, this.username, orgType));
     }
 
     public Map<String, String> getMoreInfo() {
@@ -72,5 +40,21 @@ public class SalesforceConnection implements Serializable {
 
     public String getOrgType() {
         return orgType;
+    }
+
+    public String getAlias() {
+        return alias;
+    }
+
+    public void loadingStarted() {
+        this.loading = true;
+    }
+
+    public void loadingComplete() {
+        this.loading = false;
+    }
+
+    public boolean isLoading() {
+        return loading;
     }
 }

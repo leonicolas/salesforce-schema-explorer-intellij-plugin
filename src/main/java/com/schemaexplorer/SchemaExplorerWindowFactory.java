@@ -12,6 +12,8 @@ import com.schemaexplorer.util.MetadataLoginUtil;
 import com.schemaexplorer.view.ConnectionLoadListener;
 import com.schemaexplorer.view.SObjectLoadListener;
 import com.schemaexplorer.view.SchemaExplorerWindow;
+import io.netty.util.concurrent.DefaultThreadFactory;
+import io.netty.util.concurrent.ThreadPerTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -38,7 +40,7 @@ public class SchemaExplorerWindowFactory implements ToolWindowFactory {
                 SFMetadata sfMetadata = new SFMetadata(accessToken, connection.getInstanceUrl());
                 List<Field> fields = sfMetadata.getFieldData(sObject.getName());
                 System.out.println(fields.size());
-                sObject.addChildrenObjects(fields);
+                sObject.addChildren(fields);
             }
         };
     }
@@ -52,15 +54,14 @@ public class SchemaExplorerWindowFactory implements ToolWindowFactory {
                 SFMetadata sfMetadata = new SFMetadata(accessToken, connection.getInstanceUrl());
                 List<SObject> sObjectDataList = sfMetadata.getSObject();
                 System.out.println(sObjectDataList.size());
-                connection.addSObjects(sObjectDataList);
+                connection.addChildren(sObjectDataList);
             }
         };
     }
 
     private void initializePluginContent(ToolWindow toolWindow) {
         ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
-        Content content = contentFactory.createContent(
-                schemaExplorerWindow.getContent(), "", false);
+        Content content = contentFactory.createContent(schemaExplorerWindow.getContent(), "", false);
         toolWindow.getContentManager().addContent(content);
     }
 }

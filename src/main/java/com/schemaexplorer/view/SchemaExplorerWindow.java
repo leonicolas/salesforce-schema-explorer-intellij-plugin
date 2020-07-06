@@ -8,9 +8,14 @@ import com.intellij.util.EventDispatcher;
 import com.schemaexplorer.model.Field;
 import com.schemaexplorer.model.SObject;
 import com.schemaexplorer.model.SalesforceConnection;
+import com.schemaexplorer.model.SalesforceObject;
 import com.schemaexplorer.util.SOQLQueryBuilder;
+import com.schemaexplorer.view.node.IconCheckedTreeNode;
+import com.schemaexplorer.view.node.SalesforceConnectionNode;
 import org.apache.commons.lang3.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -19,6 +24,8 @@ import javax.swing.tree.*;
 import java.util.*;
 
 public class SchemaExplorerWindow {
+
+    private static final Logger logger = LoggerFactory.getLogger(SchemaExplorerWindow.class);
 
     private JPanel panel;
     private CheckboxTree sObjectsTree;
@@ -53,27 +60,27 @@ public class SchemaExplorerWindow {
 
     private void addConnection(SalesforceConnection connection) {
         connection = SerializationUtils.clone(connection);
-        DefaultMutableTreeNode connectionNode = new DefaultMutableTreeNode(connection);
+        SalesforceConnectionNode connectionNode = new SalesforceConnectionNode(this.sObjectsTree, connection);
         getRootNode().add(connectionNode);
-
         loadSObjects(connection, connectionNode);
     }
 
     private void loadSObjects(SalesforceConnection connection, DefaultMutableTreeNode connectionNode) {
         connectionNode.removeAllChildren();
-        connection.getSortedSObjectDataSet().forEach(sObjectData -> {
-            CheckedTreeNode sObjectNode = createNewCheckedTreeNode(connectionNode, sObjectData);
+        connection.getSortedChildrenDataSet().forEach(sObjectData -> {
+            IconCheckedTreeNode sObjectNode = createNewCheckedTreeNode(connectionNode, sObjectData);
             loadChildrenObjects(sObjectData, sObjectNode);
         });
-        if(!connection.hasObjects()) {
+        if(!connection.hasChildren()) {
             addLoadingNode(connectionNode);
         }
     }
 
-    private void loadChildrenObjects(SObject sObjectData, CheckedTreeNode sObjectNode) {
+    private <T extends CheckedTreeNode> void loadChildrenObjects(SalesforceObject salesforceObject, T sObjectNode) {
         sObjectNode.removeAllChildren();
-        if(sObjectData.hasChildrenObjects()) {
-            sObjectData.getSortedChildrenObjects().forEach(childObject -> createNewCheckedTreeNode(sObjectNode, childObject));
+        if(salesforceObject.hasChildren()) {
+            salesforceObject.getSortedChildrenDataSet()
+                .forEach(childObject -> createNewCheckedTreeNode(sObjectNode, childObject));
             sObjectsTree.expandPath(new TreePath(sObjectNode.getPath()));
         } else {
             addLoadingNode(sObjectNode);
@@ -95,8 +102,8 @@ public class SchemaExplorerWindow {
         return (DefaultMutableTreeNode) model.getRoot();
     }
 
-    private CheckedTreeNode createNewCheckedTreeNode(DefaultMutableTreeNode parentNode, Object userData) {
-        CheckedTreeNode node = new CheckedTreeNode(userData);
+    private IconCheckedTreeNode createNewCheckedTreeNode(DefaultMutableTreeNode parentNode, Object userData) {
+        IconCheckedTreeNode node = new IconCheckedTreeNode(userData);
         node.setChecked(false);
         node.setEnabled(true);
         parentNode.add(node);
@@ -146,16 +153,16 @@ public class SchemaExplorerWindow {
                 DefaultMutableTreeNode node = (DefaultMutableTreeNode) treeExpansionEvent
                         .getPath().getLastPathComponent();
 
-                if (node.getUserObject() instanceof SalesforceConnection) {
-                    SalesforceConnection connection = (SalesforceConnection) node.getUserObject();
-                    if(!connection.hasObjects()) {
-                        connectionLoadDispatcher.getMulticaster().onConnectionLoad(connection);
-                        loadSObjects(connection, node);
+                if (node instanceof SalesforceConnectionNode) {
+                    SalesforceConnectionNode connectionNode = (SalesforceConnectionNode) node;
+                    SalesforceConnection connection = connectionNode.getSalesforceConnection();
+                    if(!connection.hasChildren()) {
+                        triggerOnConnectionLoadEvent(connection, node);
                     }
 
                 } else if (node.getUserObject() instanceof SObject) {
                     SObject sObjectData = (SObject) node.getUserObject();
-                    if(!sObjectData.hasChildrenObjects()) {
+                    if(!sObjectData.hasChildren()) {
                         triggerOnSObjectLoadEvent(node);
                     }
                 }
@@ -165,15 +172,40 @@ public class SchemaExplorerWindow {
             public void treeWillCollapse(TreeExpansionEvent treeExpansionEvent) throws ExpandVetoException {
                 // Do nothing.
             }
+
         };
+    }
+
+    private void triggerOnConnectionLoadEvent(SalesforceConnection connection, DefaultMutableTreeNode node) {
+        new SwingWorker<Set<SalesforceObject>, Object>() {
+            @Override
+            protected Set<SalesforceObject> doInBackground() {
+                connection.loadingStarted();
+                connectionLoadDispatcher.getMulticaster().onConnectionLoad(connection);
+                return connection.getChildrenDataSet();
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    Set<SalesforceObject> children = get();
+                    logger.debug(children.toString());
+                    loadSObjects(connection, node);
+                    connection.loadingComplete();
+                } catch (Exception e) {
+                    logger.error(
+                        String.format("Error loading the connection %s.", connection.getParentName(), e)
+                    );
+                }
+            }
+        }.execute();
     }
 
     private void triggerOnSObjectLoadEvent(DefaultMutableTreeNode sObjectNode) {
         SObject sObject = (SObject) sObjectNode.getUserObject();
-        DefaultMutableTreeNode connectionNode = (DefaultMutableTreeNode) sObjectNode.getParent();
-        SalesforceConnection connection = (SalesforceConnection) connectionNode.getUserObject();
-        sObjectLoadDispatcher.getMulticaster().onSObjectLoad(connection, sObject);
-        if(sObject.hasChildrenObjects()) {
+        SalesforceConnectionNode connectionNode = (SalesforceConnectionNode) sObjectNode.getParent();
+        sObjectLoadDispatcher.getMulticaster().onSObjectLoad(connectionNode.getSalesforceConnection(), sObject);
+        if(sObject.hasChildren()) {
             loadChildrenObjects(sObject, (CheckedTreeNode) sObjectNode);
         }
     }
@@ -196,7 +228,7 @@ public class SchemaExplorerWindow {
                 SObject sObjectData = (SObject) node.getUserObject();
 
                 // Calls the loading event.
-                if(!sObjectData.hasChildrenObjects()) {
+                if(!sObjectData.hasChildren()) {
                     triggerOnSObjectLoadEvent(node);
                 }
 
@@ -250,7 +282,7 @@ public class SchemaExplorerWindow {
                 if (!sObjectDataMap.containsKey(sObjectData.getName())) {
                     sObjectDataMap.put(sObjectData.getName(), new SObject(sObjectData));
                 }
-                sObjectDataMap.get(sObjectData.getName()).addChildObject(fieldData);
+                sObjectDataMap.get(sObjectData.getName()).addChild(fieldData);
             }
 
             private void unselectFieldNode(CheckedTreeNode fieldNode) {
@@ -265,7 +297,7 @@ public class SchemaExplorerWindow {
                 if (!sObjectDataMap.containsKey(sObjectData.getName())) {
                     return;
                 }
-                sObjectDataMap.get(sObjectData.getName()).removeChildObject(fieldData);
+                sObjectDataMap.get(sObjectData.getName()).removeChild(fieldData);
             }
 
             private void updateSOQLText(SalesforceConnection connection) {
